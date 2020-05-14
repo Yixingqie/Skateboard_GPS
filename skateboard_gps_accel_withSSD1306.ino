@@ -1,5 +1,5 @@
 #include <SoftwareSerial.h>
-//#include "LowPower.h"
+#include "LowPower.h"
 #include <TinyGPS.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -71,15 +71,90 @@ void loop()
       previousLong  = flon;
       first = 0;
     } else {
-      display.print((String)month);
+      display.print(month);
       display.print("-");
-      display.print((String)day);
+      display.print(day);
       display.print("-");
-      display.print((String)year);
+      display.print(year);
 
-
+      int x;
+      //Serial.println(hour);
       display.print("    ");
-      display.print(abs(hour - 12));
+      switch (hour) {
+        case 1:
+          x = 9;
+          break;
+        case 2:
+           x = 10;
+          break;
+        case 3:
+           x = 11;
+          break;
+        case 4:
+           x = 12;
+          break;
+        case 5:
+           x = 1;
+          break;
+        case 6:
+           x = 2;
+          break;
+        case 7:
+           x = 3;
+          break;
+        case 8:
+           x = 4;
+          break;
+        case 9:
+           x = 5;
+          break;
+        case 10:
+           x = 6;
+          break;
+        case 11:
+           x = 7;
+          break;
+        case 12:
+           x = 8;
+          break;
+        case 13:
+           x = 9;
+          break;
+        case 14:
+           x = 10;
+          break;
+        case 15:
+           x = 11;
+          break;
+        case 16:
+           x = 12;
+          break;
+        case 17:
+           x = 1;
+          break;
+        case 18:
+           x = 2;
+          break;
+        case 19:
+           x = 3;
+          break;
+        case 20:
+           x = 4;
+          break;
+        case 21:
+           x = 5;
+          break;
+        case 22:
+           x = 6;
+          break;
+        case 24:
+           x = 7;
+          break;
+        case 0:
+           x = 8;
+          break;
+      }
+      display.print(x);
       display.print(":");
       display.print(minute);
       display.print(":");
@@ -91,10 +166,10 @@ void loop()
       display.print((double)flat);
       display.print("  LN: ");
       display.println((double)flon);
-     // display.println();
+      // display.println();
       display.print("SAT: ");
       display.print(gps.satellites());
-      
+
       display.print("  ");
 
       display.print("    T: ");
@@ -114,12 +189,12 @@ void loop()
       } else {
         display.print("0.00");
       }
-      display.println("Km/Hr  ");
+      display.println(" Km/Hr  ");
       //   display.println();
-      
+
       display.print("ALT: ");
-      display.print((int)(gps.f_altitude()));
-      display.println("M  ");
+      display.print((gps.f_altitude()));
+      display.println(" M");
       display.print("MAX: ");
       display.print(maxSp);
       double distance  = gps.distance_between(flat, flon, previousLat, previousLong) / 1000.0;
@@ -131,10 +206,10 @@ void loop()
         //   display.print("0.00");
       }
 
-      display.println("Km/Hr ");
+      display.println(" Km/Hr ");
       display.print("ODO: ");
       display.print(totalDist);
-      display.print("KM ");
+      display.print(" KM ");
       previousLat = flat;
       previousLong  = flon;
       //
@@ -158,7 +233,7 @@ void loop()
   display.display();
   display.clearDisplay();
   display.clearDisplay();
-  //   LowPower.powerDown(SLEEP_500MS, ADC_OFF, BOD_ON); //put to sleep
+     LowPower.powerDown(SLEEP_15MS, ADC_OFF, BOD_OFF); //put to sleep
   // delay(1000);
 }
 
