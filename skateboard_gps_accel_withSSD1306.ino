@@ -9,6 +9,7 @@ double  AcY;
 double  AcZ;
 double  Tmp;
 const int MPU = 0x68;
+double maxAcc = 0;
 
 #define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
@@ -177,7 +178,10 @@ void loop()
       display.println("C");
 
       display.print("Acc: ");
-      display.print(AcY * 9.81);
+      if((AcY*9.81) >maxAcc){
+        maxAcc  = AcY*9.81;
+        }
+      display.print(maxAcc);
       display.println(" M/S^2");
       display.print("SPD: ");
       if ( abs(AcY) > 0.1) {
@@ -233,7 +237,7 @@ void loop()
   display.display();
   display.clearDisplay();
   display.clearDisplay();
-     LowPower.powerDown(SLEEP_15MS, ADC_OFF, BOD_OFF); //put to sleep
+     LowPower.powerDown(SLEEP_30MS, ADC_OFF, BOD_OFF); //put to sleep
   // delay(1000);
 }
 
