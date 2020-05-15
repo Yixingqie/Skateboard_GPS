@@ -10,6 +10,7 @@ double  AcZ;
 double  Tmp;
 const int MPU = 0x68;
 double maxAcc = 0;
+int dots  = 0;
 
 #define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
@@ -37,6 +38,17 @@ void setup()
   Wire.write(0x6B);  // PWR_MGMT_1 register
   Wire.write(0);     // set to zero (wakes up the MPU-6050)
   Wire.endTransmission(true);
+  display.setTextSize(2); //8.5
+  display.setTextColor(WHITE);
+  display.setCursor(1, 10);
+  display.println("  YIXING");
+  display.println("    QIE");
+  display.println(" FW: 1.00");
+  display.display();
+  display.clearDisplay();
+  display.clearDisplay();
+  delay(5000);
+
 }
 
 void loop()
@@ -86,73 +98,73 @@ void loop()
           x = 9;
           break;
         case 2:
-           x = 10;
+          x = 10;
           break;
         case 3:
-           x = 11;
+          x = 11;
           break;
         case 4:
-           x = 12;
+          x = 12;
           break;
         case 5:
-           x = 1;
+          x = 1;
           break;
         case 6:
-           x = 2;
+          x = 2;
           break;
         case 7:
-           x = 3;
+          x = 3;
           break;
         case 8:
-           x = 4;
+          x = 4;
           break;
         case 9:
-           x = 5;
+          x = 5;
           break;
         case 10:
-           x = 6;
+          x = 6;
           break;
         case 11:
-           x = 7;
+          x = 7;
           break;
         case 12:
-           x = 8;
+          x = 8;
           break;
         case 13:
-           x = 9;
+          x = 9;
           break;
         case 14:
-           x = 10;
+          x = 10;
           break;
         case 15:
-           x = 11;
+          x = 11;
           break;
         case 16:
-           x = 12;
+          x = 12;
           break;
         case 17:
-           x = 1;
+          x = 1;
           break;
         case 18:
-           x = 2;
+          x = 2;
           break;
         case 19:
-           x = 3;
+          x = 3;
           break;
         case 20:
-           x = 4;
+          x = 4;
           break;
         case 21:
-           x = 5;
+          x = 5;
           break;
         case 22:
-           x = 6;
+          x = 6;
           break;
         case 24:
-           x = 7;
+          x = 7;
           break;
         case 0:
-           x = 8;
+          x = 8;
           break;
       }
       display.print(x);
@@ -178,31 +190,36 @@ void loop()
       display.println("C");
 
       display.print("Acc: ");
-      if((AcY*9.81) >maxAcc){
-        maxAcc  = AcY*9.81;
-        }
+      if ((AcX * 9.81) > maxAcc) {
+        maxAcc  = AcX * 9.81;
+      }
       display.print(maxAcc);
       display.println(" M/S^2");
-      display.print("SPD: ");
-      if ( abs(AcY) > 0.1) {
+      // display.print("SPD: ");
+      if ( abs(AcX) > 0.1) {
         double sp = gps.f_speed_kmph();
-        display.print(sp);
+        //   display.print(sp);
         if (sp > maxSp) {
           maxSp = sp;
         }
       } else {
-        display.print("0.00");
+        //     display.print("0.00");
       }
-      display.println(" Km/Hr  ");
+      //    display.println(" Km/Hr  ");
       //   display.println();
-
+      display.print("Vi: ");
+      display.print((analogRead(A6) / 1023.0) * 5.0);
+      display.print("V");
+      display.print(" Vb: ");
+      display.print(((analogRead(A0) / 1023.0) * 5.0) * (42.0 / 3.79));
+      display.println("V");
       display.print("ALT: ");
       display.print((gps.f_altitude()));
       display.println(" M");
       display.print("MAX: ");
       display.print(maxSp);
       double distance  = gps.distance_between(flat, flon, previousLat, previousLong) / 1000.0;
-      if (abs(AcY) > 0.1) {
+      if (abs(AcX) > 0.1) {
         totalDist = (totalDist + distance);
         // display.print(distance);
       } else {
@@ -222,7 +239,8 @@ void loop()
       //      display.println();
     }
   } else {
-    display.println("NO GPS DATA");
+    display.println("NO GPS SIGNAL");
+    display.println();
     display.print("AccY: ");
     display.println(AcY);
     display.print("AccX: ");
@@ -231,13 +249,31 @@ void loop()
     display.println(AcZ);
     display.print("Tmp: ");
     display.print(Tmp);
+    display.println("C");
+    display.print("Vi: ");
+    display.print((analogRead(A6) / 1023.0) * 5.0);
+    display.print("V");
+    display.print(" Vb: ");
+    display.print(((analogRead(A0) / 1023.0) * 5.0) * (42.0 / 3.79));
+    display.println("V");
+    display.print("Searching");
+    if (dots == 0) {
+      display.print(".");
+      dots++;
+    } else if (dots == 1) {
+      display.print("..");
+      dots++;
+    } else {
+      display.print("...");
+      dots = 0;
+    }
   }
 
 
   display.display();
   display.clearDisplay();
   display.clearDisplay();
-     LowPower.powerDown(SLEEP_30MS, ADC_OFF, BOD_OFF); //put to sleep
+ // LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF); //put to sleep
   // delay(1000);
 }
 
