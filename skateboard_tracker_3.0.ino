@@ -1,33 +1,22 @@
+//By YIXING QIE
 #include <SoftwareSerial.h>
 #include <SlowSoftI2CMaster.h>
-//#include "LowPower.h"
+#include "LowPower.h"
 #include <TinyGPS.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
+//#include <Wire.h>
+//#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <EEPROM.h>
-//By YIXING QIE
-int sda = 4;
-int scl = 5;
-bool sdaOn = false;
-bool sclOn = false;
 
-void initialize_i2c() {
-  pinMode(scl, OUTPUT);
-  pinMode(sda, OUTPUT);
-  digitalWrite(sda, HIGH);
-   digitalWrite(scl, HIGH);
-  //PIND = _BV(PB3); //sda
-  //PIND = _BV(PB5); //scl
-  sdaOn = true;
-  sclOn = true;
+#define OLED_RESET 4
+Adafruit_SSD1306 display(OLED_RESET);
+TinyGPS gps;
+SoftwareSerial ss(9, 10);
 
-}
-
+const int sda = 4;
+const int scl =5;
+SlowSoftI2CMaster si = SlowSoftI2CMaster(sda, scl, true);
 uint8_t Buf[8];
-
-SlowSoftI2CMaster si = SlowSoftI2CMaster(4, 5, true);
-
 const byte address0 = 0;
 const byte address1 = 1;
 double AcX;
@@ -39,11 +28,6 @@ double maxAcc = 0;
 byte dots  = 0;
 const float sens = 0.05;
 
-#define OLED_RESET 4
-Adafruit_SSD1306 display(OLED_RESET);
-
-TinyGPS gps;
-SoftwareSerial ss(9, 10);
 
 float previousLong, previousLat;
 float totalDist;
@@ -56,55 +40,27 @@ void readAcc();
 byte hour_convert(int hour);
 void updateDist();
 void updateSpeed();
-//
-//_Bool write_Reg(unsigned char address, unsigned char reg, unsigned char val){
-// _Bool check = 0;
-//             start_i2c();//Start connecting to Slave
-//             address_Masterwrite(address); //Asks to write to slave
-//             i2c_wait_ack(); //waits for slave acknowledgment
-//             write_i2c(reg); 
-//             i2c_wait_ack(); 
-//             write_i2c(val); 
-//             check = i2c_wait_ack();//waits for slave acknowledgment
-//             stop_i2c();
-//             return check;
-//}
-//unsigned char read_Reg(unsigned char address, unsigned char reg){
-//unsigned char val;
-//
-//               start_i2c();//Start connecting to slave device
-//               address_Masterwrite(address); //asks to write the the slave
-//               i2c_wait_ack();//waits for slave acknowledgment
-//               write_i2c(reg);
-//               i2c_wait_ack();//waits for slave acknowledgment
-//             repeated_start(); //allows for switch into read mode
-//             address_MasterRead(address); //Ask to read from the slave
-//             i2c_wait_ack(); //waits for slave acknowledgment
-//             val = read_i2c(1);
-//             stop_i2c();  
-//             return val;
-//}
+uint8_t read_i2c(uint8_t address, uint8_t reg);
+void initialize_i2c();
+
 void setup()
 {
-
-  display.clearDisplay();
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
-
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.clearDisplay();
   ss.begin(9600);
 
-   si.i2c_init();
-  si.i2c_start((MPU<<1)|I2C_WRITE);
+  si.i2c_init();
+  si.i2c_start((MPU << 1) | I2C_WRITE);
   si.i2c_write(0x6B);
   si.i2c_write(0);
   si.i2c_stop();
-  
+
   si.i2c_init();
-  si.i2c_start((MPU<<1)|I2C_WRITE);
+  si.i2c_start((MPU << 1) | I2C_WRITE);
   si.i2c_write(0x6C);
   si.i2c_write(0x07);
   si.i2c_stop();
-  
+
   display.setTextSize(2); //8.5
   display.setTextColor(WHITE);
   display.setCursor(1, 10);
@@ -113,13 +69,12 @@ void setup()
   display.println(" FW: 3.00");
   display.display();
   display.clearDisplay();
-  display.clearDisplay();
   //  EEPROM.put(address0, 0.00f);
   // EEPROM.put(address1, 0.00f);
   EEPROM.get(address0, totalDist);
   EEPROM.get(address1, mSpeed);
   // totalDist =
-  delay(3000);
+  delay(5000);
 
 }
 
@@ -137,7 +92,7 @@ void loop()
 
   for (unsigned long start = millis(); millis() - start < 1000;)
   {
-   
+
     while (ss.available())
     {
       char c = ss.read();
@@ -176,10 +131,10 @@ void loop()
       totalDist = (totalDist + distance);
       currDist = (currDist + distance);
       // display.print(distance);
-    } else {
-      distance = 0;
-      //   display.print("0.00");
-    }
+    } //else {
+    // distance = 0;
+    //   display.print("0.00");
+    //  }
 
 
     if (first) {
@@ -201,7 +156,6 @@ void loop()
       display.println(second);
 
 
-      //      display.println();
       display.print("[");
       // display.print("LT: ");
       display.print(flat);
@@ -209,11 +163,10 @@ void loop()
       //display.print("  LN: ");
       display.print(flon);
       display.print("]");
-      // display.println();
-      display.print("  #: ");
+
+      display.print("  #:");
       display.println(gps.satellites());
 
-      //  display.print("  ");
 
       display.print("T: ");
       display.print((int)(Tmp));
@@ -250,8 +203,6 @@ void loop()
       updateDist();
       previousLat = flat;
       previousLong  = flon;
-
-
     }
   } else {
     display.print("NO GPS SIGNAL");
@@ -281,81 +232,49 @@ void loop()
     display.println("V");
     display.print("Searching");
     if (dots == 0) {
-      display.print(".");
+      display.print("");
       dots++;
     } else if (dots == 1) {
-      display.print("..");
+      display.print("*");
+      dots++;
+    } else if (dots == 2) {
+      display.print("**");
       dots++;
     } else {
-      display.print("...");
+      display.print("***");
       dots = 0;
     }
   }
 
 
   display.display();
-    display.clearDisplay();
   display.clearDisplay();
-  // Wire.endTransmission(true);
+  LowPower.powerDown(SLEEP_15MS, ADC_OFF, BOD_OFF); //put to sleep
+}
+uint8_t read_i2c(uint8_t address, uint8_t reg) {
 
-  // LowPower.powerDown(SLEEP_15MS, ADC_OFF, BOD_OFF); //put to sleep
-  // delay(100);
+  si.i2c_start((address << 1) | I2C_WRITE);
+  si.i2c_write(reg);
+  si.i2c_rep_start((address << 1) | I2C_READ);
+  uint8_t val = si.i2c_read(true);
+  si.i2c_stop();
+  return val;
 }
 
 void readAcc() {
- si.i2c_start((MPU<<1)|I2C_WRITE);
-  si.i2c_write(0x3B);
-  si.i2c_rep_start((MPU<<1)|I2C_READ);
-  Buf[0]=si.i2c_read(true);
-  si.i2c_stop();
-  
-  si.i2c_start((MPU<<1)|I2C_WRITE);
-  si.i2c_write(0x3C);
-  si.i2c_rep_start((MPU<<1)|I2C_READ);
-  Buf[1]=si.i2c_read(true);
-  si.i2c_stop();
-
-   si.i2c_start((MPU<<1)|I2C_WRITE);
-  si.i2c_write(0x3D);
-  si.i2c_rep_start((MPU<<1)|I2C_READ);
-  Buf[2]=si.i2c_read(true);
-  si.i2c_stop();
-
-   si.i2c_start((MPU<<1)|I2C_WRITE);
-  si.i2c_write(0x3E);
-  si.i2c_rep_start((MPU<<1)|I2C_READ);
-  Buf[3]=si.i2c_read(true);
-  si.i2c_stop();
-
-   si.i2c_start((MPU<<1)|I2C_WRITE);
-  si.i2c_write(0x3F);
-  si.i2c_rep_start((MPU<<1)|I2C_READ);
-  Buf[4]=si.i2c_read(true);
-  si.i2c_stop();
-
-   si.i2c_start((MPU<<1)|I2C_WRITE);
-  si.i2c_write(0x40);
-  si.i2c_rep_start((MPU<<1)|I2C_READ);
-  Buf[5]=si.i2c_read(true);
-  si.i2c_stop();
-
-   si.i2c_start((MPU<<1)|I2C_WRITE);
-  si.i2c_write(0x41);
-  si.i2c_rep_start((MPU<<1)|I2C_READ);
-  Buf[6]=si.i2c_read(true);
- si.i2c_stop();
-
-   si.i2c_start((MPU<<1)|I2C_WRITE);
-  si.i2c_write(0x42);
-  si.i2c_rep_start((MPU<<1)|I2C_READ);
-Buf[7]=si.i2c_read(true);
-  si.i2c_stop();
- 
-   AcX = (Buf[0] << 8 | Buf[1]) / 16384.0;
+  Buf[0] = read_i2c(MPU, 0x3B);
+  Buf[1] = read_i2c(MPU, 0x3C);
+  Buf[2] = read_i2c(MPU, 0x3D);
+  Buf[3] = read_i2c(MPU, 0x3E);
+  Buf[4] = read_i2c(MPU, 0x3F);
+  Buf[5] = read_i2c(MPU, 0x40);
+  Buf[6] = read_i2c(MPU, 0x41);
+  Buf[7] = read_i2c(MPU, 0x42);
+  AcX = (Buf[0] << 8 | Buf[1]) / 16384.0;
   AcY = (Buf[2] << 8 | Buf[3]) / 16384.0;
   AcZ = (Buf[4] << 8 | Buf[5]) / 16384.0;
   Tmp = ((Buf[6] << 8 | Buf[7]) + 12412.0) / 340.0;
-  
+
 }
 
 byte hour_convert(int hour) {
@@ -386,4 +305,12 @@ void updateSpeed() {
       EEPROM.put(address1, mSpeed);
     }
   }
+}
+
+void initialize_i2c() {
+  pinMode(scl, OUTPUT);
+  pinMode(sda, OUTPUT);
+  digitalWrite(scl, HIGH);
+  digitalWrite(sda, HIGH);
+
 }
