@@ -1,7 +1,7 @@
 //By YIXING QIE
 #include <SoftwareSerial.h>
 #include <SlowSoftI2CMaster.h>
-#include "LowPower.h"
+//#include "LowPower.h"
 #include <TinyGPS.h>
 //#include <Wire.h>
 //#include <Adafruit_GFX.h>
@@ -34,6 +34,7 @@ const int MPU = 0x68;
 double maxAcc = 0;
 byte dots  = 0;
 const float sens = 0.01;
+unsigned long countOff = 0;
 
 
 float previousLong, previousLat;
@@ -83,9 +84,9 @@ void setup()
   si.i2c_write(0x07);
   si.i2c_stop();
 
- 
-// EEPROM.put(address0, 0.00f);
-// EEPROM.put(address1, 0.00f);
+
+  // EEPROM.put(address0, 0.00f);
+  // EEPROM.put(address1, 0.00f);
   EEPROM.get(address0, totalDist);
   EEPROM.get(address1, mSpeed);
   delay(3000);
@@ -109,6 +110,10 @@ void loop()
 
   readAcc();
 
+  if (AcZ * 9.8 < -7.0) { //wheels down prevent sleep
+    previous = currentMillis;
+  }
+  
   for (unsigned long start = millis(); millis() - start < 1000;)
   {
 
@@ -215,17 +220,22 @@ void loop()
         display.print("MaxSP: ");
         display.print(mSpeed, 1);
         display.println(" KPH");
-      }
-      previousLat = flat;
-      previousLong  = flon;
 
-      if (currentMillis - previous >= interval && sp <= 10.0) {
-        saveSpeed();
-        saveDist();
-        digitalWrite(onPin, LOW);
-      } else {
-        previous = currentMillis;
+        if (sp <= 10.0) { //wheels down sitting around
+          countOff++;
+        } else {
+          countOff = 0;
+        }
       }
+    }
+    previousLat = flat;
+    previousLong  = flon;
+
+    if (countOff >= 1800) {
+      countOff = 0;
+      saveSpeed();
+      saveDist();
+      digitalWrite(onPin, LOW);
     }
 
 
@@ -312,8 +322,8 @@ void loop()
         display.setTextSize(2); //8.5
         display.setTextColor(WHITE);
         display.setCursor(1, 10);
-        display.println("  SHUTTING");
-        display.println("    DOWN");
+        display.println(" SHUTTING");
+        display.println("   DOWN");
         display.display();
         display.clearDisplay();
         delay(1000);
@@ -326,6 +336,14 @@ void loop()
 
   }
   //  LowPower.powerDown(SLEEP_15MS, ADC_OFF, BOD_OFF); //put to sleep
+
+  if (currentMillis - previous >= 600000 && (AcZ * 9.8 >= -7.0)) {
+    saveSpeed();
+    saveDist();
+    digitalWrite(onPin, LOW);
+  }
+
+
 }
 uint8_t read_i2c(uint8_t address, uint8_t reg) {
 
