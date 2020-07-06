@@ -296,9 +296,6 @@ void loop()
   display.display();
   display.clearDisplay();
   if (AcZ * 9.8 < -5 && screenOn) {
-    // digitalWrite(displayPin, LOW);
-    saveDist();
-    saveSpeed();
     display.clearDisplay();
     display.display();
     screenOn = false;
